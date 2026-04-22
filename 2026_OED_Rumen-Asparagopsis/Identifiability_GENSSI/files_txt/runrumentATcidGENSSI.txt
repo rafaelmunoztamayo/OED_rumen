@@ -1,0 +1,18 @@
+% Muñoz-Tamayo (2026)
+% program to run the identifiability test for rumentATcid
+
+
+tic 
+
+% Confirm execution
+%genssiAskForConfirmation(5);
+
+% Symbolic parameters for identifiability analysis
+%syms k_Ibr p1 p2 p3 p4 
+
+
+Nder = 8;%  number of Lie derivatives
+
+genssiMain('rumentATcid',Nder);
+t = toc
+

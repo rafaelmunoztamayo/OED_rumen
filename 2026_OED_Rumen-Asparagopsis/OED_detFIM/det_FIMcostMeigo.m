@@ -1,0 +1,109 @@
+% Muñoz-Tamayo 2026
+% program with the objective function: determinant of the FIM. To run in MEIGO. 
+
+function [dF,g] = det_FIMcostMeigo(paramesti)
+
+global wBrOptim
+OED_ATload; 
+
+Np= 5;  % number of parameters
+Nx= 19; % number of state variables
+
+
+paramt = paramesti;
+	 
+
+
+wBrOptim = paramt(end); % including the dose of bromoform in the OED
+
+
+%ts = 0:0.1:24;
+deltaT = 0.5; % setting an interval of at least 30 min between sampling times
+ts(1) = 0; 
+clear k 
+% for k=2:10
+% ts(k) = ts(k-1) + paramt(k) + deltaT;
+% end
+
+%ns = 10; % number of samples
+%ns = 5; % number of samples
+ns = length(paramt); 
+
+for k=2:ns
+ts(k) = ts(k-1) + paramt(k-1) + deltaT;
+end
+
+ts(end) = round(ts(end));
+
+ceros=zeros(1,Np*Nx); 
+
+Cin = [Cinit  ceros]; 
+[ti,Ci]=ode15s('OED_ATse',[ts],[Cin]);
+
+Xm=Ci(2:end,1:Nx); 
+%Xmp=Ci(1:end,1:Nx); 
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Computation of outputs
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+clear k 
+for k=1:length(ti)-1
+	 Ym(:,k) = OED_ATout(Xm(k,:));
+end 
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Computation of sensitivities
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Sensitivities of the state
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+	 s_1=(Ci(2:end,20:38))';
+	 s_2=(Ci(2:end,39:57))';
+	 s_3=(Ci(2:end,58:76))';
+	 s_4=(Ci(2:end,77:95))';
+	 s_5=(Ci(2:end,96:114))';
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Sensitivities of the output
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ clear k
+ 
+for k=1:length(ti)-1
+[dymds_1(:,k), dymds_2(:,k), dymds_3(:,k), dymds_4(:,k), dymds_5(:,k),] = OED_ATsy(Xm(k,:),s_1(:,k),s_2(:,k),s_3(:,k),s_4(:,k),s_5(:,k));
+end
+
+[rowy,coly]=size(Ym);
+nt=length(ti);
+
+	Sigma = 5e-4^2; %7.7e-4^2; % estimated as 10% of the average mean of the measurements 5e-4 is between of 7.7 and mean(sdY)
+    IS = inv(Sigma); 
+        
+    % Calculation of the Fisher Information Matrix FIM 
+    F = zeros(Np,Np);
+	F = zeros(5,5);
+	  for  i=1:coly 
+	    dymdp = [	 dymds_1(:,i) 	 dymds_2(:,i) 	 dymds_3(:,i) 	 dymds_4(:,i) 	 dymds_5(:,i) ];
+	    F  = dymdp'*IS*dymdp +F;
+	    
+      end 
+ 
+      dF = -det(F); % determinant of the FIM 
+     
+      if ts(end)>24
+          dF = 0; 
+      end 
+      
+       if (ts(end)-ts(end-1))<deltaT
+          dF = 0; 
+      end 
+      
+      g=0;
+return
+
+

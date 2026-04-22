@@ -1,0 +1,24 @@
+clear all
+
+%========================= PROBLEM SPECIFICATIONS ===========================
+nvar=6; % number of variables to 
+problem.x_L=eps*ones(1,nvar);
+problem.x_U=12*ones(1,nvar);
+load detFIMparam.mat
+load detFIMparam_optim_n1_5.mat     % 1 feed dstribution, det(F) = 3.5087e+20
+load detFIMparam_optim_n2a_5.mat    % 2 feed dstributions at 50%, det(F) = 9.8191e+17
+load detFIMparam_optim_n2b_5.mat    % 2 feed dstributions at 70%, 30% det(F) = 1.2229e+19
+%problem.x_0 = detFIMparam_optim_n2b; % initial guess
+%problem.x_0 = detFIMparam; % initial guess
+%problem.x_0 = detFIMparam_optim_n1_5; % initial guess
+%problem.x_0 = detFIMparam_optim_n2a_5; % initial guess
+problem.x_0 = detFIMparam_optim_n2b_5; % initial guess
+%problem.x_0 = detFIMparam_optim_n4_5; % initial guess
+problem.f='det_FIMcostMeigo';
+
+opts.maxeval=1000;
+
+%algorithm='VNS';
+%[Results]=MEIGO(problem,opts,algorithm);
+
+Results=MEIGO(problem,opts,'ESS');
